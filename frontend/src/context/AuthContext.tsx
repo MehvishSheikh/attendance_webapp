@@ -35,19 +35,32 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   // Check if user is already logged in
   useEffect(() => {
+    let isMounted = true;
+    
     const fetchUser = async () => {
       try {
         const userData = await getCurrentUser()
-        setUser(userData)
+        if (isMounted) {
+          setUser(userData)
+        }
       } catch (error) {
         console.error('Failed to fetch user:', error)
-        setUser(null)
+        if (isMounted) {
+          setUser(null)
+        }
       } finally {
-        setLoading(false)
+        if (isMounted) {
+          setLoading(false)
+        }
       }
     }
 
     fetchUser()
+    
+    // Cleanup function to prevent state updates after unmount
+    return () => {
+      isMounted = false;
+    }
   }, [])
 
   // Login function

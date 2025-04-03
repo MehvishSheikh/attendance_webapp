@@ -57,8 +57,11 @@ export const getAttendanceHistory = async () => {
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
-    if (error.response && error.response.status === 401) {
-      // Redirect to login page on authentication error
+    // Only redirect for 401 errors that are not from the getCurrentUser endpoint
+    if (error.response && 
+        error.response.status === 401 && 
+        error.config.url !== '/auth/user') {
+      // Redirect to login page on authentication error (but not for the current user check)
       window.location.href = '/login'
     }
     return Promise.reject(error)
