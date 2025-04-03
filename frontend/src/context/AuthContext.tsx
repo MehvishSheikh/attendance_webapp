@@ -1,5 +1,5 @@
 import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react'
-import { getCurrentUser, loginUser, registerUser, logoutUser } from '@/services/api'
+import { loginUser, registerUser, logoutUser } from '@/services/api'
 
 interface User {
   id: number
@@ -33,34 +33,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
 
-  // Check if user is already logged in
+  // No automatic login - just set loading to false immediately
   useEffect(() => {
-    let isMounted = true;
-    
-    const fetchUser = async () => {
-      try {
-        const userData = await getCurrentUser()
-        if (isMounted) {
-          setUser(userData)
-        }
-      } catch (error) {
-        console.error('Failed to fetch user:', error)
-        if (isMounted) {
-          setUser(null)
-        }
-      } finally {
-        if (isMounted) {
-          setLoading(false)
-        }
-      }
-    }
-
-    fetchUser()
-    
-    // Cleanup function to prevent state updates after unmount
-    return () => {
-      isMounted = false;
-    }
+    console.log('Auth initialization: No automatic login')
+    setLoading(false)
   }, [])
 
   // Login function

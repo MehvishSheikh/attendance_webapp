@@ -76,25 +76,37 @@ def login():
         return jsonify({"error": "Invalid email or password"}), 401
     
     session['user_id'] = user.id
-    return jsonify({"message": "Login successful", "user": user.to_dict()}), 200
+    # Log login attempt for debugging
+    app.logger.info(f"User logged in: {user.email}")
+    
+    response = jsonify({"message": "Login successful", "user": user.to_dict()}), 200
+    return response
 
 @app.route('/api/auth/logout', methods=['POST'])
 def logout():
+    user_id = session.get('user_id')
+    if user_id:
+        app.logger.info(f"User logged out: ID {user_id}")
+    
     session.pop('user_id', None)
-    return jsonify({"message": "Logged out successfully"}), 200
+    response = jsonify({"message": "Logged out successfully"}), 200
+    return response
 
 @app.route('/api/auth/user', methods=['GET'])
 def get_current_user():
     user_id = session.get('user_id')
     if not user_id:
-        return jsonify({"error": "Not authenticated"}), 401
+        response = jsonify({"error": "Not authenticated"}), 401
+        return response
     
     user = User.query.get(user_id)
     if not user:
         session.pop('user_id', None)
-        return jsonify({"error": "User not found"}), 404
+        response = jsonify({"error": "User not found"}), 404
+        return response
     
-    return jsonify({"user": user.to_dict()}), 200
+    response = jsonify({"user": user.to_dict()}), 200
+    return response
 
 # Attendance Routes
 @app.route('/api/attendance/status', methods=['GET'])
