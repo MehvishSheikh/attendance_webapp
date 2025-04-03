@@ -111,15 +111,61 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
         html.classList.remove('light')
         document.body.style.backgroundColor = '#09090b'
         document.body.style.color = '#fafafa'
+        
+        // Force dark mode styles
+        const style = document.createElement('style')
+        style.id = 'dark-mode-styles'
+        style.innerHTML = `
+          body {
+            background-color: #09090b !important;
+            color: #fafafa !important;
+          }
+          
+          .bg-background {
+            background-color: #09090b !important;
+          }
+          
+          .text-foreground {
+            color: #fafafa !important;
+          }
+        `
+        document.head.appendChild(style)
       } else {
         html.classList.add('light')
         html.classList.remove('dark')
         document.body.style.backgroundColor = '#ffffff'
         document.body.style.color = '#09090b'
+        
+        // Remove dark mode styles if they exist
+        const darkModeStyles = document.getElementById('dark-mode-styles')
+        if (darkModeStyles) {
+          document.head.removeChild(darkModeStyles)
+        }
+        
+        // Force light mode styles
+        const style = document.createElement('style')
+        style.id = 'light-mode-styles'
+        style.innerHTML = `
+          body {
+            background-color: #ffffff !important;
+            color: #09090b !important;
+          }
+          
+          .bg-background {
+            background-color: #ffffff !important;
+          }
+          
+          .text-foreground {
+            color: #09090b !important;
+          }
+        `
+        document.head.appendChild(style)
       }
       
       // Save theme preference to localStorage
       localStorage.setItem('theme', theme)
+      
+      console.log('Theme applied:', theme)
     } catch (error) {
       console.error('Error applying theme:', error)
     }

@@ -6,27 +6,63 @@ import Home from '@/pages/Home'
 import { useAuth } from '@/context/AuthContext'
 import { ThemeProvider } from '@/context/ThemeContext'
 import LoginThemeToggle from '@/components/LoginThemeToggle'
+import { useEffect } from 'react'
 
-// Initialize the theme as light in the localStorage before the app loads
+// Force light theme styles immediately
 if (typeof window !== 'undefined') {
   // Set default to light if no preference exists
   if (!localStorage.getItem('theme')) {
     localStorage.setItem('theme', 'light')
   }
   
-  // Add class to body for immediate styling
+  // Force light mode classes
   document.documentElement.classList.add('light')
   document.documentElement.classList.remove('dark')
+  
+  // Add direct styles
+  const style = document.createElement('style')
+  style.id = 'app-direct-styles'
+  style.innerHTML = `
+    body, html {
+      background-color: #ffffff !important;
+      color: #09090b !important;
+    }
+    
+    .light {
+      background-color: #ffffff !important;
+      color: #09090b !important;
+    }
+    
+    .dark {
+      background-color: #09090b !important;
+      color: #fafafa !important;
+    }
+  `
+  document.head.appendChild(style)
 }
 
 function App() {
   const { user } = useAuth()
 
+  // Add direct body styles
+  useEffect(() => {
+    document.body.style.backgroundColor = '#ffffff'
+    document.body.style.color = '#09090b'
+    
+    return () => {
+      const directStyles = document.getElementById('app-direct-styles')
+      if (directStyles) {
+        document.head.removeChild(directStyles)
+      }
+    }
+  }, [])
+
   return (
     <ThemeProvider>
       <Router>
-        <div className="min-h-screen bg-background text-foreground transition-colors duration-300">
-          {/* Our new theme toggle button is now a DOM element injected directly */}
+        <div className="min-h-screen transition-colors duration-300" 
+             style={{ backgroundColor: 'var(--background)', color: 'var(--foreground)' }}>
+          {/* Our theme toggle button is injected directly into the DOM */}
           <LoginThemeToggle />
           
           <Routes>
