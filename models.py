@@ -11,6 +11,8 @@ class User(db.Model):
     name = db.Column(db.String(100), nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
     password = db.Column(db.String(256), nullable=False)
+    is_admin = db.Column(db.Boolean, default=False)
+    created_at = db.Column(db.DateTime, default=datetime.datetime.now)
 
     def set_password(self, password):
         self.password = generate_password_hash(password)
@@ -22,7 +24,9 @@ class User(db.Model):
         return {
             'id': self.id,
             'name': self.name,
-            'email': self.email
+            'email': self.email,
+            'is_admin': self.is_admin,
+            'created_at': self.created_at.isoformat() if self.created_at else None
         }
 
 class Location(db.Model):
@@ -37,6 +41,27 @@ class Location(db.Model):
             'id': self.id,
             'pincode': self.pincode,
             'name': self.name
+        }
+
+class GeoLocation(db.Model):
+    __tablename__ = 'geo_location'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    latitude = db.Column(db.Float, nullable=True)
+    longitude = db.Column(db.Float, nullable=True)
+    pincode = db.Column(db.String(10), nullable=True)
+    address = db.Column(db.String(255), nullable=True)
+    timestamp = db.Column(db.DateTime, default=datetime.datetime.now)
+    checkin_id = db.Column(db.Integer, db.ForeignKey('checkin_checkout.id'), nullable=True)
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'latitude': self.latitude,
+            'longitude': self.longitude,
+            'pincode': self.pincode,
+            'address': self.address,
+            'timestamp': self.timestamp.isoformat() if self.timestamp else None
         }
 
 class CheckinCheckout(db.Model):
@@ -55,6 +80,7 @@ class CheckinCheckout(db.Model):
     # Define relationships
     user = db.relationship('User', backref=db.backref('checkins', lazy=True))
     location = db.relationship('Location', backref=db.backref('checkins', lazy=True))
+    geo_location = db.relationship('GeoLocation', backref=db.backref('checkin', uselist=False), lazy=True)
 
     def to_dict(self):
         return {
@@ -68,5 +94,6 @@ class CheckinCheckout(db.Model):
             'location_name': self.location.name if self.location else None,
             'task': self.task,
             'task_status': self.task_status,
-            'project_name': self.project_name
+            'project_name': self.project_name,
+            'geo_location': self.geo_location[0].to_dict() if self.geo_location and len(self.geo_location) > 0 else None
         }

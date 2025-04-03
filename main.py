@@ -4,10 +4,11 @@ from flask_cors import CORS
 from datetime import datetime, date
 import logging
 from werkzeug.security import generate_password_hash, check_password_hash
+from functools import wraps
 import json
 
 # Import database models
-from models import db, User, Location, CheckinCheckout
+from models import db, User, Location, CheckinCheckout, GeoLocation
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
@@ -46,6 +47,19 @@ with app.app_context():
             location = Location(pincode=loc_data["pincode"], name=loc_data["name"])
             db.session.add(location)
         db.session.commit()
+        
+    # Add default admin user if not exists
+    admin_email = "admin@senslyze.com"
+    if not User.query.filter_by(email=admin_email).first():
+        admin_user = User(
+            name="Admin User",
+            email=admin_email,
+            is_admin=True
+        )
+        admin_user.set_password("admin123") # Default password, should be changed
+        db.session.add(admin_user)
+        db.session.commit()
+        app.logger.info("Created default admin user: admin@senslyze.com with password: admin123")
 
 # Auth Routes
 @app.route('/api/auth/register', methods=['POST'])
@@ -140,10 +154,28 @@ def check_in():
         return jsonify({"error": "Not authenticated"}), 401
     
     data = request.get_json()
-    location_id = data.get('locationId')
+    
+    # Get GPS location data
+    latitude = data.get('latitude')
+    longitude = data.get('longitude')
+    address = data.get('address', '')
+    
+    # Default to first location if no GPS data
+    location_id = None
     
     # Log received data for debugging
-    app.logger.debug(f"Check-in request with location ID: {location_id}")
+    app.logger.debug(f"Check-in request with GPS: lat={latitude}, long={longitude}")
+    
+    # Find nearest location based on GPS data if available
+    if latitude and longitude:
+        # Here we would normally use an algorithm to find the nearest location
+        # For simplicity, we'll just use the first location
+        location = Location.query.first()
+        if location:
+            location_id = location.id
+    else:
+        # Fallback to provided location ID
+        location_id = data.get('locationId')
     
     # Get the selected location
     location = Location.query.get(location_id) if location_id else Location.query.first()
@@ -171,11 +203,24 @@ def check_in():
     db.session.add(check_record)
     db.session.commit()
     
+    # Store GPS data
+    if latitude and longitude:
+        geo_location = GeoLocation(
+            latitude=latitude,
+            longitude=longitude,
+            pincode=location.pincode,
+            address=address,
+            checkin_id=check_record.id
+        )
+        db.session.add(geo_location)
+        db.session.commit()
+    
     return jsonify({
         "message": "Checked in successfully",
         "id": check_record.id,
         "checkInTime": check_record.checkin_time_stamp.isoformat(),
-        "location": location.name
+        "location": location.name,
+        "gpsRecorded": bool(latitude and longitude)
     }), 201
 
 @app.route('/api/attendance/checkout', methods=['POST'])
@@ -258,6 +303,78 @@ def get_locations():
     """Get all available locations"""
     locations = Location.query.all()
     return jsonify([location.to_dict() for location in locations])
+
+# Admin Routes
+def admin_required(f):
+    """Decorator to check if user is admin"""
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        user_id = session.get('user_id')
+        if not user_id:
+            return jsonify({"error": "Not authenticated"}), 401
+        
+        user = User.query.get(user_id)
+        if not user or not user.is_admin:
+            return jsonify({"error": "Admin access required"}), 403
+        
+        return f(*args, **kwargs)
+    return decorated_function
+
+@app.route('/api/admin/users')
+@admin_required
+def get_all_users():
+    """Get all users (admin only)"""
+    users = User.query.all()
+    return jsonify([user.to_dict() for user in users])
+
+@app.route('/api/admin/users/<int:user_id>', methods=['GET'])
+@admin_required
+def get_user(user_id):
+    """Get a specific user (admin only)"""
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+    
+    return jsonify(user.to_dict())
+
+@app.route('/api/admin/users/<int:user_id>', methods=['DELETE'])
+@admin_required
+def delete_user(user_id):
+    """Delete a user (admin only)"""
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+    
+    db.session.delete(user)
+    db.session.commit()
+    
+    return jsonify({"message": f"User {user.name} deleted successfully"})
+
+@app.route('/api/admin/attendance')
+@admin_required
+def get_all_attendance():
+    """Get all attendance records (admin only)"""
+    records = CheckinCheckout.query.order_by(
+        CheckinCheckout.day.desc(),
+        CheckinCheckout.checkin_time_stamp.desc()
+    ).all()
+    
+    return jsonify([record.to_dict() for record in records])
+
+@app.route('/api/admin/attendance/<int:user_id>')
+@admin_required
+def get_user_attendance(user_id):
+    """Get attendance records for a specific user (admin only)"""
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+    
+    records = CheckinCheckout.query.filter_by(user_id=user_id).order_by(
+        CheckinCheckout.day.desc(),
+        CheckinCheckout.checkin_time_stamp.desc()
+    ).all()
+    
+    return jsonify([record.to_dict() for record in records])
 
 # Serve frontend static files - but make sure this is AFTER all API routes
 @app.route('/', defaults={'path': ''})

@@ -15,9 +15,8 @@ import { useTheme } from '@/context/ThemeContext'
 
 // Define schemas
 const checkInSchema = z.object({
-  locationId: z.string({
-    required_error: "Please select a location",
-  }),
+  locationId: z.string().optional(),
+  useGps: z.boolean().default(true)
 })
 
 type CheckInFormValues = z.infer<typeof checkInSchema>
@@ -52,13 +51,50 @@ const CheckInOut = () => {
     minute: '2-digit',
   })
   
+  // State for GPS location
+  const [gpsLocation, setGpsLocation] = useState<{latitude: number, longitude: number, address: string} | null>(null)
+  const [gpsError, setGpsError] = useState<string | null>(null)
+  const [isGettingLocation, setIsGettingLocation] = useState(false)
+
   // Initialize the check-in form
   const checkInForm = useForm<CheckInFormValues>({
     resolver: zodResolver(checkInSchema),
     defaultValues: {
       locationId: '',
+      useGps: true
     },
   })
+
+  // Function to get GPS location
+  const getGpsLocation = () => {
+    if (!navigator.geolocation) {
+      setGpsError("Geolocation is not supported by your browser")
+      return
+    }
+
+    setIsGettingLocation(true)
+    setGpsError(null)
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords
+        console.log('GPS location obtained:', latitude, longitude)
+        
+        // Get address from coordinates (simplified)
+        // In a real app, you might use a geocoding service
+        const address = `Detected location at ${latitude.toFixed(6)}, ${longitude.toFixed(6)}`
+        
+        setGpsLocation({ latitude, longitude, address })
+        setIsGettingLocation(false)
+      },
+      (error) => {
+        console.error('Error getting location:', error)
+        setGpsError(`Error getting location: ${error.message}`)
+        setIsGettingLocation(false)
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+    )
+  }
 
   useEffect(() => {
     const fetchInitialData = async () => {
@@ -94,16 +130,37 @@ const CheckInOut = () => {
   const onLocationSubmit = async (values: CheckInFormValues) => {
     setIsLoading(true)
     try {
-      console.log('Checking in with location ID:', values.locationId)
-      // Convert string to number for API call
-      const locationId = parseInt(values.locationId, 10)
-      const response = await checkIn(locationId)
+      let response;
+      
+      if (values.useGps && gpsLocation) {
+        // Use GPS coordinates for check-in
+        console.log('Checking in with GPS:', gpsLocation)
+        response = await checkIn(
+          undefined, // locationId becomes optional when using GPS
+          gpsLocation.latitude,
+          gpsLocation.longitude,
+          gpsLocation.address
+        )
+      } else if (values.locationId) {
+        // Fallback to manual location selection
+        console.log('Checking in with location ID:', values.locationId)
+        const locationId = parseInt(values.locationId, 10)
+        response = await checkIn(locationId)
+      } else {
+        throw new Error('Please select a location or allow GPS access')
+      }
+      
       setIsCheckedIn(true)
       setCheckInTime(response.checkInTime)
       setShowLocationForm(false)
+      
+      const successMessage = response.gpsRecorded 
+        ? `You've checked in at ${response.checkInTime} with GPS location` 
+        : `You've checked in at ${response.checkInTime}`
+      
       toast({
         title: 'Check-in successful',
-        description: `You've checked in at ${response.checkInTime}`,
+        description: successMessage,
       })
     } catch (error) {
       console.error('Check-in error:', error)
@@ -254,40 +311,78 @@ const CheckInOut = () => {
               <div className="border border-border rounded-lg p-5 shadow-sm">
                 <h3 className="text-lg font-medium mb-4 flex items-center">
                   <MapPin className="h-4 w-4 mr-2 text-primary" />
-                  Select Your Location
+                  {gpsLocation ? "GPS Location Detected" : "Choose Your Location"}
                 </h3>
+                
+                {gpsLocation ? (
+                  <div className={`mb-5 p-4 rounded-md ${isDark ? 'bg-green-950/30' : 'bg-green-50'} border ${isDark ? 'border-green-900/30' : 'border-green-200'}`}>
+                    <p className="text-sm font-medium mb-1 flex items-center">
+                      <MapPin className="inline-block h-3.5 w-3.5 mr-1.5 text-green-600" /> 
+                      GPS Location Detected
+                    </p>
+                    <p className="text-xs text-muted-foreground">{gpsLocation.address}</p>
+                  </div>
+                ) : (
+                  <div className="mb-5">
+                    <Button 
+                      type="button" 
+                      onClick={getGpsLocation}
+                      className="w-full mb-3 flex gap-2 items-center justify-center"
+                      disabled={isGettingLocation}
+                      variant="outline"
+                    >
+                      <MapPin className="h-4 w-4" />
+                      {isGettingLocation ? "Detecting Location..." : "Detect My GPS Location"}
+                    </Button>
+                    
+                    {gpsError && (
+                      <div className="text-sm text-red-500 mt-2 p-2 border border-red-200 rounded bg-red-50">
+                        <p>{gpsError}</p>
+                        <p className="text-xs mt-1">Please select a location manually below.</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+                
                 <Form {...checkInForm}>
-                  <form onSubmit={checkInForm.handleSubmit(onLocationSubmit)} className="space-y-5">
-                    <FormField
-                      control={checkInForm.control}
-                      name="locationId"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Office Location</FormLabel>
-                          <Select 
-                            onValueChange={field.onChange} 
-                            defaultValue={field.value}
-                          >
-                            <FormControl>
-                              <SelectTrigger className="w-full">
-                                <SelectValue placeholder="Select a location" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {locations.map((location) => (
-                                <SelectItem key={location.id} value={location.id.toString()}>
-                                  {location.name} ({location.pincode})
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                  <form onSubmit={checkInForm.handleSubmit((data) => onLocationSubmit(data as CheckInFormValues))} className="space-y-5">
+                    {(!gpsLocation || gpsError) && (
+                      <FormField
+                        control={checkInForm.control as any}
+                        name="locationId"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Office Location</FormLabel>
+                            <Select 
+                              onValueChange={field.onChange} 
+                              defaultValue={field.value}
+                            >
+                              <FormControl>
+                                <SelectTrigger className="w-full">
+                                  <SelectValue placeholder="Select a location" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {locations.map((location) => (
+                                  <SelectItem key={location.id} value={location.id.toString()}>
+                                    {location.name} ({location.pincode})
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    )}
                     
                     <div className="flex gap-3 pt-2">
-                      <Button type="submit" size="lg" className="flex-1 gap-2" disabled={isLoading}>
+                      <Button 
+                        type="submit" 
+                        size="lg" 
+                        className="flex-1 gap-2" 
+                        disabled={isLoading || (isGettingLocation && !gpsLocation)}
+                      >
                         <CheckCircle className="h-4 w-4" />
                         {isLoading ? 'Processing...' : 'Check In'}
                       </Button>

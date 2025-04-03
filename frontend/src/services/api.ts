@@ -35,9 +35,26 @@ export const getCheckInStatus = async () => {
   return response.data
 }
 
-export const checkIn = async (locationId: number) => {
-  const response = await api.post('/attendance/checkin', { locationId })
-  return response.data
+export const checkIn = async (
+  locationId?: number, 
+  latitude?: number, 
+  longitude?: number,
+  address?: string
+) => {
+  // If GPS coordinates are provided, send them with the request
+  if (latitude && longitude) {
+    const response = await api.post('/attendance/checkin', { 
+      locationId, // Optional, may be undefined
+      latitude, 
+      longitude,
+      address: address || `Location at coordinates (${latitude}, ${longitude})`
+    })
+    return response.data
+  } else {
+    // Fall back to location ID only
+    const response = await api.post('/attendance/checkin', { locationId })
+    return response.data
+  }
 }
 
 export const checkOut = async (task: string, status: string, projectName: string) => {

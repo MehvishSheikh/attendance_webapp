@@ -1,8 +1,9 @@
 import { Button } from '@/components/ui/button'
 import { useAuth } from '@/context/AuthContext'
-import { LogOut, User, Moon, Sun } from 'lucide-react'
+import { LogOut, User, Moon, Sun, ShieldCheck } from 'lucide-react'
 import ThemeToggle from './ThemeToggle'
 import { useTheme } from '@/context/ThemeContext'
+import { Link } from 'react-router-dom'
 
 export default function Navbar() {
   const { user, logout } = useAuth()
@@ -14,25 +15,27 @@ export default function Navbar() {
     }`}>
       <div className="container mx-auto px-4 py-3 flex items-center justify-between">
         <div className="flex items-center space-x-3">
-          <div className={`p-1.5 rounded-full ${theme === 'dark' ? 'bg-primary/10' : 'bg-primary/5'}`}>
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="h-6 w-6 text-primary"
-            >
-              <path d="M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20z" />
-              <path d="M12 6v6l4 4" />
-            </svg>
-          </div>
-          <div>
-            <span className="font-bold text-lg tracking-tight">Senslyze</span>
-            <div className="text-xs text-muted-foreground">Attendance Tracker</div>
-          </div>
+          <Link to="/" className="flex items-center space-x-3">
+            <div className={`p-1.5 rounded-full ${theme === 'dark' ? 'bg-primary/10' : 'bg-primary/5'}`}>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="h-6 w-6 text-primary"
+              >
+                <path d="M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20z" />
+                <path d="M12 6v6l4 4" />
+              </svg>
+            </div>
+            <div>
+              <span className="font-bold text-lg tracking-tight">Senslyze</span>
+              <div className="text-xs text-muted-foreground">Attendance Tracker</div>
+            </div>
+          </Link>
         </div>
         
         {user && (
@@ -41,13 +44,28 @@ export default function Navbar() {
               <ThemeToggle />
             </div>
             
+            {user.isAdmin && (
+              <Link to="/admin">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  className="flex items-center gap-1 text-purple-600 border-purple-200 hover:bg-purple-50 hover:text-purple-700 dark:text-purple-400 dark:border-purple-900/50 dark:hover:bg-purple-900/20"
+                >
+                  <ShieldCheck className="h-4 w-4" />
+                  <span className="hidden sm:inline">Admin</span>
+                </Button>
+              </Link>
+            )}
+            
             <div className="hidden md:flex items-center gap-3 border-l border-border pl-3">
               <div className={`h-9 w-9 rounded-full ${theme === 'dark' ? 'bg-primary/10' : 'bg-primary/5'} flex items-center justify-center text-primary`}>
                 <User className="h-5 w-5" />
               </div>
               <div className="flex flex-col">
                 <span className="text-sm font-medium leading-tight">{user.name}</span>
-                <span className="text-xs text-muted-foreground">Employee</span>
+                <span className="text-xs text-muted-foreground">
+                  {user.isAdmin ? 'Administrator' : 'Employee'}
+                </span>
               </div>
             </div>
             
