@@ -18,20 +18,31 @@ export default function Home() {
       
       {/* Theme Toggle is now in App.tsx */}
       
-      <main className="flex-1 container mx-auto px-4 py-10">
+      <main className="flex-1 container mx-auto px-4 py-6">
         <div className="max-w-5xl mx-auto">
-          <h1 className="text-3xl font-bold mb-8 text-center tracking-tight">
-            Employee Dashboard
-          </h1>
+          <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-transparent p-6 rounded-xl mb-8">
+            <h1 className="text-4xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/70">
+              Employee Dashboard
+            </h1>
+            <p className="mt-2 text-muted-foreground">
+              Track your attendance and manage your daily tasks
+            </p>
+          </div>
           
           <Tabs defaultValue="attendance" value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-2 mb-8 rounded-lg shadow-sm">
-              <TabsTrigger value="attendance" className="flex items-center gap-2 text-sm md:text-base py-3">
-                <Clock className="h-5 w-5" />
+            <TabsList className="inline-flex h-12 items-center justify-center space-x-2 rounded-xl bg-muted/50 p-1 mb-8">
+              <TabsTrigger 
+                value="attendance" 
+                className="inline-flex items-center justify-center whitespace-nowrap rounded-lg px-5 py-3 text-sm font-medium ring-offset-background transition-all hover:bg-background/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-sm dark:data-[state=active]:bg-slate-900"
+              >
+                <Clock className="h-5 w-5 mr-2" />
                 <span>Attendance</span>
               </TabsTrigger>
-              <TabsTrigger value="dashboard" className="flex items-center gap-2 text-sm md:text-base py-3">
-                <BarChart className="h-5 w-5" />
+              <TabsTrigger 
+                value="dashboard" 
+                className="inline-flex items-center justify-center whitespace-nowrap rounded-lg px-5 py-3 text-sm font-medium ring-offset-background transition-all hover:bg-background/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-sm dark:data-[state=active]:bg-slate-900"
+              >
+                <BarChart className="h-5 w-5 mr-2" />
                 <span>Dashboard</span>
               </TabsTrigger>
             </TabsList>
