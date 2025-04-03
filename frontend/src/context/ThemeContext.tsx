@@ -32,6 +32,28 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     return savedTheme || (prefersDark ? 'dark' : 'light')
   })
 
+  // Set up the document with transition styles
+  useEffect(() => {
+    // Add transition styles to head once
+    const styleElement = document.createElement('style')
+    styleElement.innerHTML = `
+      body {
+        transition: background-color 0.3s ease, color 0.3s ease;
+      }
+      
+      * {
+        transition: border-color 0.3s ease, background-color 0.3s ease, box-shadow 0.3s ease;
+      }
+    `
+    document.head.appendChild(styleElement)
+    
+    return () => {
+      // Clean up style element on unmount
+      document.head.removeChild(styleElement)
+    }
+  }, [])
+
+  // Apply theme changes
   useEffect(() => {
     // Update the HTML element's class when theme changes
     const html = document.documentElement

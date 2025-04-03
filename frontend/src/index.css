@@ -58,3 +58,60 @@
     font-feature-settings: "rlig" 1, "calt" 1;
   }
 }
+
+/* Theme toggle animations */
+@keyframes sun-rise {
+  0% {
+    transform: scale(0.6) rotate(0deg);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1) rotate(45deg);
+    opacity: 1;
+  }
+}
+
+@keyframes moon-rise {
+  0% {
+    transform: scale(0.6) rotate(0deg);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1) rotate(-45deg);
+    opacity: 1;
+  }
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 0 rgba(252, 211, 77, 0);
+  }
+  50% {
+    box-shadow: 0 0 15px rgba(252, 211, 77, 0.5);
+  }
+}
+
+@keyframes pulse-shadow {
+  0%, 100% {
+    box-shadow: 0 0 0 rgba(79, 70, 229, 0);
+  }
+  50% {
+    box-shadow: 0 0 15px rgba(79, 70, 229, 0.5);
+  }
+}
+
+.theme-toggle-sun {
+  animation: sun-rise 0.5s ease forwards;
+}
+
+.theme-toggle-moon {
+  animation: moon-rise 0.5s ease forwards;
+}
+
+.mobile-theme-toggle-light {
+  animation: pulse-glow 2s infinite ease-in-out;
+}
+
+.mobile-theme-toggle-dark {
+  animation: pulse-shadow 2s infinite ease-in-out;
+}
