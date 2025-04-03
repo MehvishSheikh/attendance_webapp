@@ -1,5 +1,4 @@
 import AuthForm from '@/components/AuthForm'
-import LoginThemeToggle from '@/components/LoginThemeToggle'
 import { useTheme } from '@/context/ThemeContext'
 
 export default function Register() {
@@ -9,8 +8,7 @@ export default function Register() {
     <div className={`min-h-screen flex flex-col items-center justify-center p-6 bg-background ${
       theme === 'dark' ? 'bg-slate-900' : 'bg-slate-50'
     }`}>
-      {/* Theme Toggle */}
-      <LoginThemeToggle />
+      {/* Theme Toggle is now in App.tsx */}
       
       <div className="w-full max-w-md space-y-8 animate-in fade-in-50 duration-700">
         <div className="text-center">

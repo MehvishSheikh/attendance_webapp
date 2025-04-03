@@ -4,13 +4,19 @@ import CheckInOut from '@/components/CheckInOut'
 import Dashboard from '@/components/Dashboard'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Clock, BarChart } from 'lucide-react'
+import { useTheme } from '@/context/ThemeContext'
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState('attendance')
+  const { theme } = useTheme()
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
+    <div className={`min-h-screen flex flex-col ${
+      theme === 'dark' ? 'bg-slate-900' : 'bg-slate-50'
+    }`}>
       <Navbar />
+      
+      {/* Theme Toggle is now in App.tsx */}
       
       <main className="flex-1 container mx-auto px-4 py-10">
         <div className="max-w-5xl mx-auto">
