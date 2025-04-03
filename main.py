@@ -113,13 +113,13 @@ def check_status():
     if check_record:
         location = Location.query.get(check_record.location_id)
         return jsonify({
-            "checked_in": True,
+            "isCheckedIn": True,
             "id": check_record.id,
-            "checkin_time": check_record.checkin_time_stamp.isoformat(),
+            "checkInTime": check_record.checkin_time_stamp.isoformat(),
             "location": location.name if location else None
         }), 200
     else:
-        return jsonify({"checked_in": False}), 200
+        return jsonify({"isCheckedIn": False}), 200
 
 @app.route('/api/attendance/checkin', methods=['POST'])
 def check_in():
@@ -127,11 +127,11 @@ def check_in():
     if not user_id:
         return jsonify({"error": "Not authenticated"}), 401
     
-    data = request.get_json()
-    location_id = data.get('location_id')
-    
-    if not Location.query.get(location_id):
-        return jsonify({"error": "Invalid location"}), 400
+    # Get the first available location (for simplicity)
+    # In a real-world scenario, we would use geolocation to determine the nearest office
+    location = Location.query.first()
+    if not location:
+        return jsonify({"error": "No locations available"}), 400
     
     today = date.today()
     existing_record = CheckinCheckout.query.filter_by(
@@ -146,7 +146,7 @@ def check_in():
     check_record = CheckinCheckout(
         user_id=user_id,
         day=today,
-        location_id=location_id,
+        location_id=location.id,
         checkin_time_stamp=datetime.now()
     )
     
@@ -156,7 +156,8 @@ def check_in():
     return jsonify({
         "message": "Checked in successfully",
         "id": check_record.id,
-        "checkin_time": check_record.checkin_time_stamp.isoformat()
+        "checkInTime": check_record.checkin_time_stamp.isoformat(),
+        "location": location.name
     }), 201
 
 @app.route('/api/attendance/checkout', methods=['POST'])
@@ -166,12 +167,18 @@ def check_out():
         return jsonify({"error": "Not authenticated"}), 401
     
     data = request.get_json()
+    app.logger.info(f"Raw checkout data received: {data}")
+    
     task = data.get('task')
-    task_status = data.get('task_status')
-    project_name = data.get('project_name')
+    task_status = data.get('taskStatus')  # Changed from task_status to match frontend
+    project_name = data.get('projectName')  # Changed from project_name to match frontend
+    
+    # Log received data for debugging
+    app.logger.debug(f"Parsed checkout data: task={task}, task_status={task_status}, project_name={project_name}")
     
     if not task or not task_status or not project_name:
-        return jsonify({"error": "Task, task status, and project name are required"}), 400
+        app.logger.error(f"Missing required fields. Received: {data}")
+        return jsonify({"error": f"Task, task status, and project name are required. Received: {data}"}), 400
     
     today = date.today()
     check_record = CheckinCheckout.query.filter_by(
@@ -193,7 +200,7 @@ def check_out():
     return jsonify({
         "message": "Checked out successfully",
         "id": check_record.id,
-        "checkout_time": check_record.checkout_time_stamp.isoformat()
+        "checkOutTime": check_record.checkout_time_stamp.isoformat()
     }), 200
 
 @app.route('/api/attendance/history', methods=['GET'])
@@ -207,9 +214,20 @@ def get_history():
         CheckinCheckout.checkin_time_stamp.desc()
     ).all()
     
-    return jsonify({
-        "history": [record.to_dict() for record in records]
-    }), 200
+    history = []
+    for record in records:
+        history.append({
+            'id': record.id,
+            'date': record.day.isoformat() if record.day else None,
+            'checkInTime': record.checkin_time_stamp.isoformat() if record.checkin_time_stamp else None,
+            'checkOutTime': record.checkout_time_stamp.isoformat() if record.checkout_time_stamp else None,
+            'location': record.location.name if record.location else None,
+            'task': record.task,
+            'taskStatus': record.task_status,
+            'projectName': record.project_name
+        })
+    
+    return jsonify(history), 200
 
 # Health check endpoint
 @app.route('/api/health')
@@ -223,10 +241,14 @@ def get_locations():
     locations = Location.query.all()
     return jsonify([location.to_dict() for location in locations])
 
-# Serve frontend static files
+# Serve frontend static files - but make sure this is AFTER all API routes
 @app.route('/', defaults={'path': ''})
 @app.route('/<path:path>')
 def serve(path):
+    # Don't intercept API routes
+    if path.startswith('api/'):
+        return jsonify({"error": "API route not found"}), 404
+    
     if path != "" and os.path.exists(os.path.join('frontend/dist', path)):
         return send_from_directory('frontend/dist', path)
     else:

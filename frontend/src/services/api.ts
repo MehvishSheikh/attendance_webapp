@@ -25,7 +25,7 @@ export const logoutUser = async () => {
 }
 
 export const getCurrentUser = async () => {
-  const response = await api.get('/auth/me')
+  const response = await api.get('/auth/user')
   return response.data
 }
 
@@ -40,7 +40,10 @@ export const checkIn = async () => {
   return response.data
 }
 
-export const checkOut = async (task: string, taskStatus: string, projectName: string) => {
+export const checkOut = async (task: string, status: string, projectName: string) => {
+  // Convert the status parameter to taskStatus for the API
+  const taskStatus = status
+  console.log('Sending checkout data:', { task, taskStatus, projectName })
   const response = await api.post('/attendance/checkout', { task, taskStatus, projectName })
   return response.data
 }

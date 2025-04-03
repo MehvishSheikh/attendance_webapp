@@ -42,6 +42,11 @@ const TaskForm = ({ onSubmit, onCancel }: TaskFormProps) => {
     },
   })
 
+  const handleFormSubmit = (values: TaskFormValues) => {
+    console.log('TaskForm handleFormSubmit values:', values)
+    onSubmit(values)
+  }
+
   return (
     <div className="space-y-4 p-4 bg-slate-50 rounded-lg border">
       <h3 className="text-lg font-medium">Task Details</h3>
@@ -50,7 +55,7 @@ const TaskForm = ({ onSubmit, onCancel }: TaskFormProps) => {
       </p>
       
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-4">
           <FormField
             control={form.control}
             name="task"

@@ -75,6 +75,7 @@ const CheckInOut = () => {
       return
     }
     
+    console.log('Checking out with task data:', taskData)
     setIsLoading(true)
     try {
       await checkOut(taskData.task, taskData.status, taskData.projectName)
@@ -98,7 +99,13 @@ const CheckInOut = () => {
   }
   
   const handleTaskSubmit = (data: { task: string; status: string; projectName: string }) => {
-    handleCheckOut(data)
+    console.log('CheckInOut handleTaskSubmit received data:', data)
+    // Make sure we're passing the status as taskStatus for the API
+    handleCheckOut({
+      task: data.task,
+      status: data.status, // This should be renamed to taskStatus in the API call
+      projectName: data.projectName
+    })
   }
   
   const handleTaskCancel = () => {
