@@ -4,13 +4,19 @@ import Login from '@/pages/Login'
 import Register from '@/pages/Register'
 import Home from '@/pages/Home'
 import { useAuth } from '@/context/AuthContext'
+import { useEffect } from 'react'
 
 function App() {
   const { user } = useAuth()
+  
+  // Set dark mode by default
+  useEffect(() => {
+    document.documentElement.classList.add('dark')
+  }, [])
 
   return (
     <Router>
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-background text-foreground">
         <Routes>
           <Route path="/login" element={user ? <Navigate to="/" /> : <Login />} />
           <Route path="/register" element={user ? <Navigate to="/" /> : <Register />} />

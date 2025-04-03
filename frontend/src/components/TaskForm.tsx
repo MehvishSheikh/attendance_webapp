@@ -48,22 +48,26 @@ const TaskForm = ({ onSubmit, onCancel }: TaskFormProps) => {
   }
 
   return (
-    <div className="space-y-4 p-4 bg-slate-50 rounded-lg border">
-      <h3 className="text-lg font-medium">Task Details</h3>
+    <div className="space-y-4 p-5 bg-card rounded-lg border border-border shadow-sm">
+      <h3 className="text-lg font-medium tracking-tight">Task Details</h3>
       <p className="text-sm text-muted-foreground">
         Please provide details about the task you've completed
       </p>
       
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-4">
+        <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-5">
           <FormField
             control={form.control}
             name="task"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Task Description</FormLabel>
+                <FormLabel className="text-foreground">Task Description</FormLabel>
                 <FormControl>
-                  <Input placeholder="What did you work on today?" {...field} />
+                  <Input 
+                    placeholder="What did you work on today?" 
+                    className="bg-background/50"
+                    {...field} 
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -75,13 +79,13 @@ const TaskForm = ({ onSubmit, onCancel }: TaskFormProps) => {
             name="status"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Task Status</FormLabel>
+                <FormLabel className="text-foreground">Task Status</FormLabel>
                 <Select 
                   onValueChange={field.onChange} 
                   defaultValue={field.value}
                 >
                   <FormControl>
-                    <SelectTrigger>
+                    <SelectTrigger className="bg-background/50">
                       <SelectValue placeholder="Select status" />
                     </SelectTrigger>
                   </FormControl>
@@ -101,16 +105,20 @@ const TaskForm = ({ onSubmit, onCancel }: TaskFormProps) => {
             name="projectName"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Project Name</FormLabel>
+                <FormLabel className="text-foreground">Project Name</FormLabel>
                 <FormControl>
-                  <Input placeholder="Project name" {...field} />
+                  <Input 
+                    placeholder="Project name" 
+                    className="bg-background/50"
+                    {...field} 
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
             )}
           />
           
-          <div className="flex space-x-2 pt-2">
+          <div className="flex gap-3 pt-3">
             <Button type="submit" className="flex-1">Submit & Check Out</Button>
             <Button type="button" variant="outline" onClick={onCancel} className="flex-1">
               Cancel

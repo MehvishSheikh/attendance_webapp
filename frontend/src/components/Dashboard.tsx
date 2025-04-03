@@ -110,29 +110,29 @@ const Dashboard = () => {
           ) : (
             <div className="space-y-4">
               {recentRecords.map((record) => (
-                <div key={record.id} className="border rounded-lg p-4">
-                  <div className="flex justify-between items-start mb-2">
+                <div key={record.id} className="border border-border rounded-lg p-4 bg-card/80 shadow-sm">
+                  <div className="flex justify-between items-start mb-3">
                     <div>
-                      <h3 className="font-medium">{formatDate(record.date)}</h3>
-                      <p className="text-sm text-gray-500">
+                      <h3 className="font-medium text-foreground">{formatDate(record.date)}</h3>
+                      <p className="text-sm text-muted-foreground mt-1">
                         {record.checkInTime && formatTime(record.checkInTime)} - 
                         {record.checkOutTime && formatTime(record.checkOutTime)}
                       </p>
                     </div>
-                    <div className="text-sm">
-                      <span className="text-gray-500">Location:</span> {record.location}
+                    <div className="text-sm bg-primary/10 text-primary-foreground px-2.5 py-1 rounded-md">
+                      {record.location}
                     </div>
                   </div>
                   
                   {record.task && (
-                    <div className="mt-2">
+                    <div className="mt-3 pt-3 border-t border-border">
                       <div className="flex items-center justify-between">
-                        <div className="text-sm font-medium">{record.projectName}</div>
-                        <div className={`px-2 py-1 rounded-full text-xs ${getStatusColor(record.taskStatus)}`}>
+                        <div className="text-sm font-medium text-foreground/90">{record.projectName}</div>
+                        <div className={`px-2.5 py-1 rounded-md text-xs ${getStatusColor(record.taskStatus)}`}>
                           {record.taskStatus}
                         </div>
                       </div>
-                      <p className="text-sm mt-1">{record.task}</p>
+                      <p className="text-sm mt-2 text-muted-foreground">{record.task}</p>
                     </div>
                   )}
                 </div>

@@ -93,12 +93,12 @@ export default function AuthForm({ type }: AuthFormProps) {
   }
 
   return (
-    <Card className="w-full max-w-md">
-      <CardHeader className="space-y-1">
-        <CardTitle className="text-2xl font-bold">
+    <Card className="w-full max-w-md shadow-md">
+      <CardHeader className="space-y-2">
+        <CardTitle className="text-2xl font-bold tracking-tight">
           {isLogin ? 'Login' : 'Create an account'}
         </CardTitle>
-        <CardDescription>
+        <CardDescription className="text-muted-foreground">
           {isLogin
             ? 'Enter your credentials to sign in to your account'
             : 'Fill in the form below to create your account'}
@@ -106,16 +106,20 @@ export default function AuthForm({ type }: AuthFormProps) {
       </CardHeader>
       <CardContent>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
             {!isLogin && (
               <FormField
                 control={form.control}
                 name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Name</FormLabel>
+                    <FormLabel className="text-foreground">Name</FormLabel>
                     <FormControl>
-                      <Input placeholder="Your name" {...field} />
+                      <Input 
+                        placeholder="Your name" 
+                        className="bg-background/50" 
+                        {...field} 
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -128,9 +132,14 @@ export default function AuthForm({ type }: AuthFormProps) {
               name="email"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Email</FormLabel>
+                  <FormLabel className="text-foreground">Email</FormLabel>
                   <FormControl>
-                    <Input type="email" placeholder="your.email@example.com" {...field} />
+                    <Input 
+                      type="email" 
+                      placeholder="your.email@example.com" 
+                      className="bg-background/50"
+                      {...field} 
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -142,9 +151,14 @@ export default function AuthForm({ type }: AuthFormProps) {
               name="password"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Password</FormLabel>
+                  <FormLabel className="text-foreground">Password</FormLabel>
                   <FormControl>
-                    <Input type="password" placeholder="******" {...field} />
+                    <Input 
+                      type="password" 
+                      placeholder="******" 
+                      className="bg-background/50"
+                      {...field} 
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -157,9 +171,14 @@ export default function AuthForm({ type }: AuthFormProps) {
                 name="confirmPassword"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Confirm Password</FormLabel>
+                    <FormLabel className="text-foreground">Confirm Password</FormLabel>
                     <FormControl>
-                      <Input type="password" placeholder="******" {...field} />
+                      <Input 
+                        type="password" 
+                        placeholder="******" 
+                        className="bg-background/50"
+                        {...field} 
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -167,22 +186,22 @@ export default function AuthForm({ type }: AuthFormProps) {
               />
             )}
             
-            <Button type="submit" className="w-full" disabled={isLoading}>
+            <Button type="submit" className="w-full mt-6" disabled={isLoading}>
               {isLoading ? 'Processing...' : isLogin ? 'Sign In' : 'Create Account'}
             </Button>
             
-            <div className="text-center text-sm mt-2">
+            <div className="text-center text-sm mt-4">
               {isLogin ? (
-                <p>
+                <p className="text-muted-foreground">
                   Don't have an account?{' '}
-                  <Link to="/register" className="text-primary hover:underline">
+                  <Link to="/register" className="text-primary font-medium hover:underline">
                     Sign up
                   </Link>
                 </p>
               ) : (
-                <p>
+                <p className="text-muted-foreground">
                   Already have an account?{' '}
-                  <Link to="/login" className="text-primary hover:underline">
+                  <Link to="/login" className="text-primary font-medium hover:underline">
                     Sign in
                   </Link>
                 </p>
