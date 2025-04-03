@@ -70,7 +70,11 @@ function App() {
             <Route path="/login" element={user ? <Navigate to="/" /> : <Login />} />
             <Route path="/register" element={user ? <Navigate to="/" /> : <Register />} />
             <Route path="/admin" element={user ? <AdminDashboard /> : <Navigate to="/login" />} />
-            <Route path="/" element={user ? <Home /> : <Navigate to="/login" />} />
+            <Route path="/" element={
+              user ? (
+                user.isAdmin ? <Navigate to="/admin" /> : <Home />
+              ) : <Navigate to="/login" />
+            } />
             {/* Redirect all other paths to login */}
             <Route path="*" element={<Navigate to="/login" />} />
           </Routes>

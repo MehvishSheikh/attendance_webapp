@@ -43,8 +43,21 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   // Login function
   const login = async (email: string, password: string) => {
     try {
-      const userData = await loginUser(email, password)
-      setUser(userData)
+      const response = await loginUser(email, password)
+      // Make sure we're using the user object returned from the server
+      // and mapping is_admin to isAdmin if needed
+      const userData = response.user
+      
+      // Create a properly formatted user object with correct property names
+      setUser({
+        id: userData.id,
+        name: userData.name,
+        email: userData.email,
+        isAdmin: userData.is_admin // Map is_admin from backend to isAdmin in frontend
+      })
+      
+      console.log("User data after login:", userData)
+      console.log("Admin status:", userData.is_admin)
     } catch (error) {
       console.error('Login error:', error)
       throw error
@@ -54,8 +67,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   // Register function
   const register = async (name: string, email: string, password: string) => {
     try {
-      const userData = await registerUser(name, email, password)
-      setUser(userData)
+      const response = await registerUser(name, email, password)
+      // Make sure we're using the user object returned from the server
+      const userData = response.user
+      
+      // Create a properly formatted user object with correct property names
+      setUser({
+        id: userData.id,
+        name: userData.name,
+        email: userData.email,
+        isAdmin: userData.is_admin // Map is_admin from backend to isAdmin in frontend
+      })
     } catch (error) {
       console.error('Register error:', error)
       throw error
