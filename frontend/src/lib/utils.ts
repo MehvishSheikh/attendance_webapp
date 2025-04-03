@@ -29,12 +29,12 @@ export const formatTime = (date: Date | string): string => {
 export const getStatusColor = (status: string): string => {
   switch (status.toLowerCase()) {
     case 'completed':
-      return 'bg-emerald-950/30 text-emerald-400 border border-emerald-800/30'
+      return 'bg-green-500/20 text-green-500 dark:bg-green-500/10 dark:text-green-400'
     case 'pending':
-      return 'bg-amber-950/30 text-amber-400 border border-amber-800/30'
+      return 'bg-amber-500/20 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400'
     case 'blockage':
-      return 'bg-red-950/30 text-red-400 border border-red-800/30'
+      return 'bg-red-500/20 text-red-600 dark:bg-red-500/10 dark:text-red-400'
     default:
-      return 'bg-slate-800/50 text-slate-300 border border-slate-700/50'
+      return 'bg-slate-500/20 text-slate-600 dark:bg-slate-500/10 dark:text-slate-400'
   }
 }

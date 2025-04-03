@@ -1,6 +1,7 @@
 import { Button } from '@/components/ui/button'
 import { useAuth } from '@/context/AuthContext'
 import { LogOut, User } from 'lucide-react'
+import ThemeToggle from './ThemeToggle'
 
 export default function Navbar() {
   const { user, logout } = useAuth()
@@ -26,7 +27,9 @@ export default function Navbar() {
         </div>
         
         {user && (
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
+            <ThemeToggle />
+            
             <div className="flex items-center gap-3">
               <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center text-primary">
                 <User className="h-5 w-5" />

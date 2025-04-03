@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { useToast } from '@/components/ui/use-toast'
 import { getCheckInStatus, checkIn, checkOut, getLocations } from '@/services/api'
-import { Clock, MapPin } from 'lucide-react'
+import { Clock, MapPin, CheckCircle, XCircle, Building, Calendar, ArrowRight } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
 import TaskForm from './TaskForm'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -11,6 +11,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 import * as z from 'zod'
+import { useTheme } from '@/context/ThemeContext'
 
 // Define schemas
 const checkInSchema = z.object({
@@ -159,104 +160,158 @@ const CheckInOut = () => {
     setShowTaskForm(false)
   }
 
+  const { theme } = useTheme()
+  const isDark = theme === 'dark'
+  
   return (
-    <Card className="w-full shadow-md border border-border">
+    <Card className="w-full shadow-md border border-border overflow-hidden">
       <CardHeader className="bg-primary/5 pb-4 border-b border-border">
-        <CardTitle className="text-xl flex items-center justify-between">
-          <span>Attendance Tracker</span>
-          <span className="text-sm font-normal flex items-center text-muted-foreground">
-            <Clock className="w-4 h-4 mr-1.5" /> {currentTime}
-          </span>
-        </CardTitle>
-        <p className="text-sm text-muted-foreground">{currentDate}</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle className="text-xl flex items-center">
+              <Calendar className="w-5 h-5 mr-2 text-primary" />
+              Attendance Tracker
+            </CardTitle>
+            <CardDescription className="mt-1.5 flex items-center">
+              <Clock className="w-3.5 h-3.5 mr-1.5 text-muted-foreground" /> 
+              {currentDate}
+            </CardDescription>
+          </div>
+          <div className="text-base font-medium flex items-center px-3 py-1.5 rounded-md bg-muted/70">
+            {currentTime}
+          </div>
+        </div>
       </CardHeader>
-      <CardContent className="pt-6">
+      <CardContent className="pt-6 pb-6">
         {isCheckedIn ? (
           <div className="space-y-6">
-            <div className="bg-emerald-950/20 border border-emerald-800/30 rounded-md p-4 flex items-center">
-              <div className="bg-emerald-900/30 text-emerald-400 rounded-full p-2.5 mr-4">
-                <Clock className="h-5 w-5" />
+            <div className={`rounded-lg p-5 flex items-center ${isDark 
+              ? 'bg-green-950/40 border border-green-900/30' 
+              : 'bg-green-50 border border-green-200'}`}>
+              <div className={`rounded-full p-3 mr-4 ${isDark
+                ? 'bg-green-900/40 text-green-400'
+                : 'bg-green-100 text-green-600'}`}>
+                <CheckCircle className="h-6 w-6" />
               </div>
               <div>
-                <p className="font-medium text-emerald-400">Currently Checked In</p>
-                <p className="text-sm text-emerald-500/80 mt-0.5">
-                  Since {checkInTime || 'earlier today'}
+                <p className={`font-medium text-lg ${isDark ? 'text-green-400' : 'text-green-600'}`}>
+                  Currently Checked In
+                </p>
+                <p className={`text-sm mt-1 ${isDark ? 'text-green-500/80' : 'text-green-600/80'}`}>
+                  You checked in at {checkInTime || 'earlier today'}
                 </p>
               </div>
             </div>
             
             {showTaskForm ? (
-              <TaskForm onSubmit={handleTaskSubmit} onCancel={handleTaskCancel} />
+              <div className="border border-border rounded-lg p-4 shadow-sm">
+                <h3 className="text-lg font-medium mb-4 flex items-center">
+                  <ArrowRight className="h-4 w-4 mr-2 text-primary" />
+                  Complete Your Workday
+                </h3>
+                <TaskForm onSubmit={handleTaskSubmit} onCancel={handleTaskCancel} />
+              </div>
             ) : (
-              <Button
-                onClick={() => handleCheckOut()}
-                variant="destructive"
-                className="w-full"
-                disabled={isLoading}
-              >
-                {isLoading ? 'Processing...' : 'Check Out'}
-              </Button>
+              <div className="space-y-4">
+                <p className="text-sm text-muted-foreground">
+                  When you're ready to finish your workday, click the button below to check out.
+                  You'll be asked to provide details about your work.
+                </p>
+                <Button
+                  onClick={() => handleCheckOut()}
+                  variant="destructive"
+                  className="w-full gap-2"
+                  size="lg"
+                  disabled={isLoading}
+                >
+                  <XCircle className="h-4 w-4" />
+                  {isLoading ? 'Processing...' : 'Check Out'}
+                </Button>
+              </div>
             )}
           </div>
         ) : (
           <div className="space-y-6">
-            <div className="bg-blue-950/20 border border-blue-800/30 rounded-md p-4 flex items-center">
-              <div className="bg-blue-900/30 text-blue-400 rounded-full p-2.5 mr-4">
-                <MapPin className="h-5 w-5" />
+            <div className={`rounded-lg p-5 flex items-center ${isDark 
+              ? 'bg-blue-950/40 border border-blue-900/30' 
+              : 'bg-blue-50 border border-blue-200'}`}>
+              <div className={`rounded-full p-3 mr-4 ${isDark
+                ? 'bg-blue-900/40 text-blue-400'
+                : 'bg-blue-100 text-blue-600'}`}>
+                <Building className="h-6 w-6" />
               </div>
               <div>
-                <p className="font-medium text-blue-400">Ready to start work?</p>
-                <p className="text-sm text-blue-500/80 mt-0.5">
-                  Your location will be recorded when you check in
+                <p className={`font-medium text-lg ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>
+                  Ready to Start Your Day?
+                </p>
+                <p className={`text-sm mt-1 ${isDark ? 'text-blue-500/80' : 'text-blue-600/80'}`}>
+                  Select your office location to check in
                 </p>
               </div>
             </div>
             
             {showLocationForm ? (
-              <form onSubmit={checkInForm.handleSubmit(onLocationSubmit)} className="space-y-4">
-                <div className="space-y-2">
-                  <label htmlFor="locationId" className="block text-sm font-medium">
-                    Select Location
-                  </label>
-                  <select
-                    id="locationId"
-                    {...checkInForm.register('locationId')}
-                    className="w-full px-3 py-2 border border-gray-700 rounded-md bg-gray-800 text-white"
-                  >
-                    <option value="">-- Select a location --</option>
-                    {locations.map((location) => (
-                      <option key={location.id} value={location.id}>
-                        {location.name} ({location.pincode})
-                      </option>
-                    ))}
-                  </select>
-                  {checkInForm.formState.errors.locationId && (
-                    <p className="text-red-500 text-xs mt-1">
-                      {checkInForm.formState.errors.locationId.message}
-                    </p>
-                  )}
-                </div>
-                
-                <div className="flex space-x-2">
-                  <Button type="submit" className="flex-1" disabled={isLoading}>
-                    {isLoading ? 'Processing...' : 'Check In'}
-                  </Button>
-                  <Button 
-                    type="button" 
-                    variant="outline" 
-                    onClick={handleLocationCancel}
-                    disabled={isLoading}
-                  >
-                    Cancel
-                  </Button>
-                </div>
-              </form>
+              <div className="border border-border rounded-lg p-5 shadow-sm">
+                <h3 className="text-lg font-medium mb-4 flex items-center">
+                  <MapPin className="h-4 w-4 mr-2 text-primary" />
+                  Select Your Location
+                </h3>
+                <Form {...checkInForm}>
+                  <form onSubmit={checkInForm.handleSubmit(onLocationSubmit)} className="space-y-5">
+                    <FormField
+                      control={checkInForm.control}
+                      name="locationId"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Office Location</FormLabel>
+                          <Select 
+                            onValueChange={field.onChange} 
+                            defaultValue={field.value}
+                          >
+                            <FormControl>
+                              <SelectTrigger className="w-full">
+                                <SelectValue placeholder="Select a location" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {locations.map((location) => (
+                                <SelectItem key={location.id} value={location.id.toString()}>
+                                  {location.name} ({location.pincode})
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <div className="flex gap-3 pt-2">
+                      <Button type="submit" size="lg" className="flex-1 gap-2" disabled={isLoading}>
+                        <CheckCircle className="h-4 w-4" />
+                        {isLoading ? 'Processing...' : 'Check In'}
+                      </Button>
+                      <Button 
+                        type="button" 
+                        variant="outline" 
+                        size="lg"
+                        onClick={handleLocationCancel}
+                        disabled={isLoading}
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  </form>
+                </Form>
+              </div>
             ) : (
               <Button
                 onClick={handleShowLocationForm}
-                className="w-full"
+                size="lg"
+                className="w-full gap-2"
                 disabled={isLoading}
               >
+                <MapPin className="h-4 w-4" />
                 {isLoading ? 'Processing...' : 'Check In Now'}
               </Button>
             )}
