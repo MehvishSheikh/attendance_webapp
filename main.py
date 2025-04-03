@@ -93,8 +93,11 @@ def login():
         return jsonify({"error": "Invalid email or password"}), 401
     
     session['user_id'] = user.id
-    # Log login attempt for debugging
+    
+    # More detailed logging for debugging
     app.logger.info(f"User logged in: {user.email}")
+    app.logger.info(f"User is_admin: {user.is_admin}")
+    app.logger.info(f"User data: {user.to_dict()}")
     
     response = jsonify({"message": "Login successful", "user": user.to_dict()}), 200
     return response
@@ -112,15 +115,24 @@ def logout():
 @app.route('/api/auth/user', methods=['GET'])
 def get_current_user():
     user_id = session.get('user_id')
+    
     if not user_id:
+        app.logger.warning("No user_id in session for /api/auth/user")
         response = jsonify({"error": "Not authenticated"}), 401
         return response
     
     user = User.query.get(user_id)
+    
     if not user:
+        app.logger.warning(f"User with id {user_id} not found in database")
         session.pop('user_id', None)
         response = jsonify({"error": "User not found"}), 404
         return response
+    
+    # Detailed logging for debugging
+    app.logger.info(f"Current user: {user.email}")
+    app.logger.info(f"User is_admin: {user.is_admin}")
+    app.logger.info(f"User data: {user.to_dict()}")
     
     response = jsonify({"user": user.to_dict()}), 200
     return response
