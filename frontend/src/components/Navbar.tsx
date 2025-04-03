@@ -40,10 +40,6 @@ export default function Navbar() {
         
         {user && (
           <div className="flex items-center gap-3">
-            <div className="mr-1">
-              <ThemeToggle />
-            </div>
-            
             {user.isAdmin && (
               <Link to="/admin">
                 <Button 
@@ -58,6 +54,9 @@ export default function Navbar() {
             )}
             
             <div className="hidden md:flex items-center gap-3 border-l border-border pl-3">
+              <div className="mr-3">
+                <ThemeToggle />
+              </div>
               <div className={`h-9 w-9 rounded-full ${theme === 'dark' ? 'bg-primary/10' : 'bg-primary/5'} flex items-center justify-center text-primary`}>
                 <User className="h-5 w-5" />
               </div>
