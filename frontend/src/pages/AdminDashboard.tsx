@@ -31,27 +31,23 @@ interface User {
 
 interface AttendanceRecord {
   id: number
-  date: string
-  checkInTime: string
-  checkOutTime: string | null
-  location: string
+  day: string
+  checkin_time_stamp: string | null
+  checkout_time_stamp: string | null
+  location_name: string
   task: string | null
-  taskStatus: string | null
-  projectName: string | null
-  user: {
-    id: number
-    name: string
-    email: string
-  }
+  task_status: string | null
+  project_name: string | null
+  user_name: string
 }
 
 const AdminDashboard = () => {
-  const { user } = useAuth()
+  const { user, logout } = useAuth()
   const navigate = useNavigate()
   const { toast } = useToast()
   const { theme } = useTheme()
   const isDark = theme === 'dark'
-  
+
   const [users, setUsers] = useState<User[]>([])
   const [attendance, setAttendance] = useState<AttendanceRecord[]>([])
   const [loading, setLoading] = useState({
@@ -63,14 +59,14 @@ const AdminDashboard = () => {
   const [userAttendance, setUserAttendance] = useState<AttendanceRecord[]>([])
   const [exportMonth, setExportMonth] = useState<string>(new Date().getMonth() + 1 + '')
   const [exportYear, setExportYear] = useState<string>(new Date().getFullYear() + '')
-  
+
   // Redirect if not admin
   useEffect(() => {
     if (user && !user.isAdmin) {
       navigate('/')
     }
   }, [user, navigate])
-  
+
   // Fetch all users
   const fetchUsers = async () => {
     setLoading(prev => ({ ...prev, users: true }))
@@ -88,7 +84,7 @@ const AdminDashboard = () => {
       setLoading(prev => ({ ...prev, users: false }))
     }
   }
-  
+
   // Fetch all attendance records
   const fetchAttendance = async () => {
     setLoading(prev => ({ ...prev, attendance: true }))
@@ -106,7 +102,7 @@ const AdminDashboard = () => {
       setLoading(prev => ({ ...prev, attendance: false }))
     }
   }
-  
+
   // Fetch attendance for a specific user
   const fetchUserAttendance = async (userId: number) => {
     setLoading(prev => ({ ...prev, attendance: true }))
@@ -125,13 +121,13 @@ const AdminDashboard = () => {
       setLoading(prev => ({ ...prev, attendance: false }))
     }
   }
-  
+
   // Delete a user
   const deleteUser = async (userId: number) => {
     if (!confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
       return
     }
-    
+
     setLoading(prev => ({ ...prev, delete: true }))
     try {
       await axios.delete(`/api/admin/users/${userId}`)
@@ -157,14 +153,14 @@ const AdminDashboard = () => {
       setLoading(prev => ({ ...prev, delete: false }))
     }
   }
-  
+
   // Export attendance data for a specific user as CSV
   const exportAttendance = (userId: number) => {
     if (!userId) return
-    
+
     const year = parseInt(exportYear)
     const month = parseInt(exportMonth)
-    
+
     try {
       api.exportUserAttendance(userId, year, month)
       toast({
@@ -180,20 +176,35 @@ const AdminDashboard = () => {
       })
     }
   }
-  
+
+  const handleLogout = async () => {
+    try {
+      await logout()
+      navigate('/login')
+    } catch (error) {
+      console.error('Logout error:', error)
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Failed to logout'
+      })
+    }
+  }
+
   // Load initial data
   useEffect(() => {
     fetchUsers()
     fetchAttendance()
   }, [])
-  
+
   return (
     <div className="container py-8 max-w-7xl mx-auto">
       <h1 className="text-3xl font-bold mb-6 flex items-center">
         <Users className="h-8 w-8 mr-3 text-primary" />
         Admin Dashboard
+        <Button onClick={handleLogout} className="ml-auto">Logout</Button>
       </h1>
-      
+
       <Tabs defaultValue="users" className="space-y-6">
         <TabsList className="mb-2">
           <TabsTrigger value="users" className="flex items-center gap-2">
@@ -205,7 +216,7 @@ const AdminDashboard = () => {
             Attendance
           </TabsTrigger>
         </TabsList>
-        
+
         {/* Users Tab */}
         <TabsContent value="users" className="space-y-6">
           <Card>
@@ -288,7 +299,7 @@ const AdminDashboard = () => {
               )}
             </CardContent>
           </Card>
-          
+
           {selectedUser && (
             <Card>
               <CardHeader>
@@ -360,7 +371,7 @@ const AdminDashboard = () => {
                     </Button>
                   </div>
                 </div>
-                
+
                 {loading.attendance ? (
                   <div className="text-center py-4">Loading attendance records...</div>
                 ) : (
@@ -421,7 +432,7 @@ const AdminDashboard = () => {
             </Card>
           )}
         </TabsContent>
-        
+
         {/* Attendance Tab */}
         <TabsContent value="attendance" className="space-y-6">
           <Card>
@@ -459,25 +470,25 @@ const AdminDashboard = () => {
                       ) : (
                         attendance.map(record => (
                           <tr key={record.id} className="hover:bg-muted/30">
-                            <td className="px-4 py-3 text-sm font-medium">{record.user?.name || 'N/A'}</td>
+                            <td className="px-4 py-3 text-sm font-medium">{record.user_name || 'N/A'}</td>
                             <td className="px-4 py-3 text-sm">
-                              {record.date ? formatDate(new Date(record.date)) : 'N/A'}
+                              {record.day ? formatDate(new Date(record.day)) : 'N/A'}
                             </td>
                             <td className="px-4 py-3 text-sm">
-                              {record.checkInTime ? formatTime(new Date(record.checkInTime)) : 'N/A'}
+                              {record.checkin_time_stamp ? formatTime(new Date(record.checkin_time_stamp)) : 'N/A'}
                             </td>
                             <td className="px-4 py-3 text-sm">
-                              {record.checkOutTime ? formatTime(new Date(record.checkOutTime)) : 'Pending'}
+                              {record.checkout_time_stamp ? formatTime(new Date(record.checkout_time_stamp)) : 'Pending'}
                             </td>
-                            <td className="px-4 py-3 text-sm">{record.location || 'N/A'}</td>
-                            <td className="px-4 py-3 text-sm">{record.projectName || 'N/A'}</td>
+                            <td className="px-4 py-3 text-sm">{record.location_name || 'N/A'}</td>
+                            <td className="px-4 py-3 text-sm">{record.project_name || 'N/A'}</td>
                             <td className="px-4 py-3 text-sm">
                               <div className="max-w-xs truncate">{record.task || 'N/A'}</div>
                             </td>
                             <td className="px-4 py-3 text-sm">
-                              {record.taskStatus ? (
-                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(record.taskStatus)}`}>
-                                  {record.taskStatus}
+                              {record.task_status ? (
+                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(record.task_status)}`}>
+                                  {record.task_status}
                                 </span>
                               ) : (
                                 'N/A'
