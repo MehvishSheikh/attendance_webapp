@@ -1,7 +1,13 @@
 import os
-from flask import Flask, send_from_directory, jsonify
-from datetime import datetime
+from flask import Flask, send_from_directory, jsonify, request, session
+from flask_cors import CORS
+from datetime import datetime, date
 import logging
+from werkzeug.security import generate_password_hash, check_password_hash
+import json
+
+# Import database models
+from models import db, User, Location, CheckinCheckout
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
@@ -10,6 +16,200 @@ app = Flask(__name__)
 
 # App configuration 
 app.secret_key = os.environ.get("SESSION_SECRET", "senslyze_secret_key")
+app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL")
+app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
+    "pool_recycle": 300,
+    "pool_pre_ping": True,
+}
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+
+# Initialize database
+db.init_app(app)
+
+# Enable CORS
+CORS(app, supports_credentials=True)
+
+# Create tables if they don't exist
+with app.app_context():
+    db.create_all()
+    
+    # Add default locations if not already created
+    if not Location.query.first():
+        default_locations = [
+            {"pincode": "500001", "name": "Hyderabad Office"},
+            {"pincode": "600001", "name": "Chennai Office"},
+            {"pincode": "400001", "name": "Mumbai Office"},
+            {"pincode": "110001", "name": "Delhi Office"},
+            {"pincode": "560001", "name": "Bangalore Office"}
+        ]
+        for loc_data in default_locations:
+            location = Location(pincode=loc_data["pincode"], name=loc_data["name"])
+            db.session.add(location)
+        db.session.commit()
+
+# Auth Routes
+@app.route('/api/auth/register', methods=['POST'])
+def register():
+    data = request.get_json()
+    
+    # Check if email already exists
+    if User.query.filter_by(email=data.get('email')).first():
+        return jsonify({"error": "Email already registered"}), 400
+    
+    user = User(
+        name=data.get('name'),
+        email=data.get('email')
+    )
+    user.set_password(data.get('password'))
+    
+    db.session.add(user)
+    db.session.commit()
+    
+    return jsonify({"message": "User registered successfully", "user": user.to_dict()}), 201
+
+@app.route('/api/auth/login', methods=['POST'])
+def login():
+    data = request.get_json()
+    user = User.query.filter_by(email=data.get('email')).first()
+    
+    if not user or not user.check_password(data.get('password')):
+        return jsonify({"error": "Invalid email or password"}), 401
+    
+    session['user_id'] = user.id
+    return jsonify({"message": "Login successful", "user": user.to_dict()}), 200
+
+@app.route('/api/auth/logout', methods=['POST'])
+def logout():
+    session.pop('user_id', None)
+    return jsonify({"message": "Logged out successfully"}), 200
+
+@app.route('/api/auth/user', methods=['GET'])
+def get_current_user():
+    user_id = session.get('user_id')
+    if not user_id:
+        return jsonify({"error": "Not authenticated"}), 401
+    
+    user = User.query.get(user_id)
+    if not user:
+        session.pop('user_id', None)
+        return jsonify({"error": "User not found"}), 404
+    
+    return jsonify({"user": user.to_dict()}), 200
+
+# Attendance Routes
+@app.route('/api/attendance/status', methods=['GET'])
+def check_status():
+    user_id = session.get('user_id')
+    if not user_id:
+        return jsonify({"error": "Not authenticated"}), 401
+    
+    today = date.today()
+    check_record = CheckinCheckout.query.filter_by(
+        user_id=user_id,
+        day=today,
+        checkout_time_stamp=None
+    ).first()
+    
+    if check_record:
+        location = Location.query.get(check_record.location_id)
+        return jsonify({
+            "checked_in": True,
+            "id": check_record.id,
+            "checkin_time": check_record.checkin_time_stamp.isoformat(),
+            "location": location.name if location else None
+        }), 200
+    else:
+        return jsonify({"checked_in": False}), 200
+
+@app.route('/api/attendance/checkin', methods=['POST'])
+def check_in():
+    user_id = session.get('user_id')
+    if not user_id:
+        return jsonify({"error": "Not authenticated"}), 401
+    
+    data = request.get_json()
+    location_id = data.get('location_id')
+    
+    if not Location.query.get(location_id):
+        return jsonify({"error": "Invalid location"}), 400
+    
+    today = date.today()
+    existing_record = CheckinCheckout.query.filter_by(
+        user_id=user_id,
+        day=today,
+        checkout_time_stamp=None
+    ).first()
+    
+    if existing_record:
+        return jsonify({"error": "Already checked in today"}), 400
+    
+    check_record = CheckinCheckout(
+        user_id=user_id,
+        day=today,
+        location_id=location_id,
+        checkin_time_stamp=datetime.now()
+    )
+    
+    db.session.add(check_record)
+    db.session.commit()
+    
+    return jsonify({
+        "message": "Checked in successfully",
+        "id": check_record.id,
+        "checkin_time": check_record.checkin_time_stamp.isoformat()
+    }), 201
+
+@app.route('/api/attendance/checkout', methods=['POST'])
+def check_out():
+    user_id = session.get('user_id')
+    if not user_id:
+        return jsonify({"error": "Not authenticated"}), 401
+    
+    data = request.get_json()
+    task = data.get('task')
+    task_status = data.get('task_status')
+    project_name = data.get('project_name')
+    
+    if not task or not task_status or not project_name:
+        return jsonify({"error": "Task, task status, and project name are required"}), 400
+    
+    today = date.today()
+    check_record = CheckinCheckout.query.filter_by(
+        user_id=user_id,
+        day=today,
+        checkout_time_stamp=None
+    ).first()
+    
+    if not check_record:
+        return jsonify({"error": "No active check-in found"}), 400
+    
+    check_record.checkout_time_stamp = datetime.now()
+    check_record.task = task
+    check_record.task_status = task_status
+    check_record.project_name = project_name
+    
+    db.session.commit()
+    
+    return jsonify({
+        "message": "Checked out successfully",
+        "id": check_record.id,
+        "checkout_time": check_record.checkout_time_stamp.isoformat()
+    }), 200
+
+@app.route('/api/attendance/history', methods=['GET'])
+def get_history():
+    user_id = session.get('user_id')
+    if not user_id:
+        return jsonify({"error": "Not authenticated"}), 401
+    
+    records = CheckinCheckout.query.filter_by(user_id=user_id).order_by(
+        CheckinCheckout.day.desc(), 
+        CheckinCheckout.checkin_time_stamp.desc()
+    ).all()
+    
+    return jsonify({
+        "history": [record.to_dict() for record in records]
+    }), 200
 
 # Health check endpoint
 @app.route('/api/health')
@@ -20,15 +220,8 @@ def health_check():
 @app.route('/api/locations')
 def get_locations():
     """Get all available locations"""
-    # Sample locations data
-    locations = [
-        {"id": 1, "pincode": "500001", "name": "Hyderabad Office"},
-        {"id": 2, "pincode": "600001", "name": "Chennai Office"},
-        {"id": 3, "pincode": "400001", "name": "Mumbai Office"},
-        {"id": 4, "pincode": "110001", "name": "Delhi Office"},
-        {"id": 5, "pincode": "560001", "name": "Bangalore Office"}
-    ]
-    return jsonify(locations)
+    locations = Location.query.all()
+    return jsonify([location.to_dict() for location in locations])
 
 # Serve frontend static files
 @app.route('/', defaults={'path': ''})
