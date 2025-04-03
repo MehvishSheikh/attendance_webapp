@@ -388,23 +388,23 @@ const AdminDashboard = () => {
                           userAttendance.map(record => (
                             <tr key={record.id} className="hover:bg-muted/30">
                               <td className="px-4 py-3 text-sm">
-                                {record.date ? formatDate(new Date(record.date)) : 'N/A'}
+                                {record.day ? formatDate(new Date(record.day)) : 'N/A'}
                               </td>
                               <td className="px-4 py-3 text-sm">
-                                {record.checkInTime ? formatTime(new Date(record.checkInTime)) : 'N/A'}
+                                {record.checkin_time_stamp ? formatTime(new Date(record.checkin_time_stamp)) : 'N/A'}
                               </td>
                               <td className="px-4 py-3 text-sm">
-                                {record.checkOutTime ? formatTime(new Date(record.checkOutTime)) : 'Pending'}
+                                {record.checkout_time_stamp ? formatTime(new Date(record.checkout_time_stamp)) : 'Pending'}
                               </td>
-                              <td className="px-4 py-3 text-sm">{record.location || 'N/A'}</td>
-                              <td className="px-4 py-3 text-sm">{record.projectName || 'N/A'}</td>
+                              <td className="px-4 py-3 text-sm">{record.location_name || 'N/A'}</td>
+                              <td className="px-4 py-3 text-sm">{record.project_name || 'N/A'}</td>
                               <td className="px-4 py-3 text-sm">
                                 <div className="max-w-xs truncate">{record.task || 'N/A'}</div>
                               </td>
                               <td className="px-4 py-3 text-sm">
-                                {record.taskStatus ? (
-                                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(record.taskStatus)}`}>
-                                    {record.taskStatus}
+                                {record.task_status ? (
+                                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(record.task_status)}`}>
+                                    {record.task_status}
                                   </span>
                                 ) : (
                                   'N/A'
