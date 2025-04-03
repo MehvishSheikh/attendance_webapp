@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import {
   Form,
@@ -175,16 +175,16 @@ export default function AuthForm({ type }: AuthFormProps) {
               {isLogin ? (
                 <p>
                   Don't have an account?{' '}
-                  <a href="/register" className="text-primary hover:underline">
+                  <Link to="/register" className="text-primary hover:underline">
                     Sign up
-                  </a>
+                  </Link>
                 </p>
               ) : (
                 <p>
                   Already have an account?{' '}
-                  <a href="/login" className="text-primary hover:underline">
+                  <Link to="/login" className="text-primary hover:underline">
                     Sign in
-                  </a>
+                  </Link>
                 </p>
               )}
             </div>
