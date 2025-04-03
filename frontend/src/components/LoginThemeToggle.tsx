@@ -1,5 +1,6 @@
-import { useTheme } from '@/context/ThemeContext'
+
 import { useEffect, useRef } from 'react'
+import { useTheme } from '@/context/ThemeContext'
 
 const LoginThemeToggle = () => {
   const { theme, toggleTheme } = useTheme()
@@ -11,10 +12,10 @@ const LoginThemeToggle = () => {
     style.innerHTML = `
       #fixed-theme-toggle {
         position: fixed !important;
-        top: 24px !important;
+        bottom: 24px !important;
         right: 24px !important;
-        width: 44px !important;
-        height: 44px !important;
+        width: 48px !important;
+        height: 48px !important;
         border-radius: 50% !important;
         display: flex !important;
         align-items: center !important;
@@ -33,18 +34,18 @@ const LoginThemeToggle = () => {
       }
 
       .light-theme-toggle {
-        background: linear-gradient(135deg, #4338ca, #3730a3) !important;
-        color: white !important;
+        background: linear-gradient(135deg, #1e293b, #0f172a) !important;
+        color: #e2e8f0 !important;
       }
 
       .dark-theme-toggle {
-        background: linear-gradient(135deg, #f59e0b, #d97706) !important;
+        background: linear-gradient(135deg, #fbbf24, #f59e0b) !important;
         color: #1f2937 !important;
       }
 
       #toggle-icon {
-        width: 22px !important;
-        height: 22px !important;
+        width: 20px !important;
+        height: 20px !important;
         transition: transform 0.3s ease !important;
       }
 
