@@ -8,7 +8,7 @@ interface ThemeContextType {
 }
 
 // Create context with default values to prevent undefined errors
-const defaultTheme: Theme = 'dark'
+const defaultTheme: Theme = 'light'
 const defaultThemeContext: ThemeContextType = {
   theme: defaultTheme,
   toggleTheme: () => {}
@@ -25,8 +25,8 @@ interface ThemeProviderProps {
 }
 
 export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
-  // Default theme to dark to avoid flashing during initial load
-  const [theme, setTheme] = useState<Theme>(defaultTheme)
+  // Default theme to light to avoid flashing during initial load
+  const [theme, setTheme] = useState<Theme>('light')
   const [isInitialized, setIsInitialized] = useState(false)
   
   // Initialize theme from localStorage or system preference only on client-side
