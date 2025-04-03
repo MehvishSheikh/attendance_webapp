@@ -75,6 +75,37 @@ export const getLocations = async () => {
   return response.data
 }
 
+// Admin service endpoints
+export const getAllUsers = async () => {
+  const response = await api.get('/admin/users')
+  return response.data
+}
+
+export const getUser = async (userId: number) => {
+  const response = await api.get(`/admin/users/${userId}`)
+  return response.data
+}
+
+export const deleteUser = async (userId: number) => {
+  const response = await api.delete(`/admin/users/${userId}`)
+  return response.data
+}
+
+export const getAllAttendance = async () => {
+  const response = await api.get('/admin/attendance')
+  return response.data
+}
+
+export const getUserAttendance = async (userId: number) => {
+  const response = await api.get(`/admin/attendance/${userId}`)
+  return response.data
+}
+
+export const exportUserAttendance = async (userId: number, year: number, month: number) => {
+  // Use window.open to trigger file download
+  window.open(`/api/admin/attendance/export/${userId}?year=${year}&month=${month}`, '_blank')
+}
+
 // Add an interceptor to handle authentication errors
 api.interceptors.response.use(
   (response) => response,

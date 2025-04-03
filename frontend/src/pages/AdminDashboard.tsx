@@ -6,9 +6,20 @@ import { useAuth } from '@/context/AuthContext'
 import { useTheme } from '@/context/ThemeContext'
 import { formatDate, formatTime, getStatusColor } from '@/lib/utils'
 import { useToast } from '@/components/ui/use-toast'
-import { Users, Clock, Trash2, Calendar, ClipboardList } from 'lucide-react'
+import { 
+  Users, Clock, Trash2, Calendar, ClipboardList, 
+  FileDown, Database, ChevronDown 
+} from 'lucide-react'
 import axios from 'axios'
 import { Button } from '@/components/ui/button'
+import * as api from '@/services/api'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
 interface User {
   id: number
@@ -50,6 +61,8 @@ const AdminDashboard = () => {
   })
   const [selectedUser, setSelectedUser] = useState<number | null>(null)
   const [userAttendance, setUserAttendance] = useState<AttendanceRecord[]>([])
+  const [exportMonth, setExportMonth] = useState<string>(new Date().getMonth() + 1 + '')
+  const [exportYear, setExportYear] = useState<string>(new Date().getFullYear() + '')
   
   // Redirect if not admin
   useEffect(() => {
@@ -142,6 +155,29 @@ const AdminDashboard = () => {
       })
     } finally {
       setLoading(prev => ({ ...prev, delete: false }))
+    }
+  }
+  
+  // Export attendance data for a specific user as CSV
+  const exportAttendance = (userId: number) => {
+    if (!userId) return
+    
+    const year = parseInt(exportYear)
+    const month = parseInt(exportMonth)
+    
+    try {
+      api.exportUserAttendance(userId, year, month)
+      toast({
+        title: 'Export Started',
+        description: 'Your download should begin shortly'
+      })
+    } catch (error) {
+      console.error('Export error:', error)
+      toast({
+        variant: 'destructive',
+        title: 'Export Failed',
+        description: 'Unable to download attendance data'
+      })
     }
   }
   
@@ -267,6 +303,64 @@ const AdminDashboard = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
+                {/* Export Controls */}
+                <div className="mb-6 p-4 bg-muted/30 rounded-md border">
+                  <h3 className="font-medium text-sm mb-3 flex items-center gap-2">
+                    <FileDown className="h-4 w-4 text-primary" />
+                    Export Attendance Data
+                  </h3>
+                  <div className="flex flex-wrap gap-4 items-end">
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Month</label>
+                      <Select 
+                        value={exportMonth} 
+                        onValueChange={setExportMonth}
+                      >
+                        <SelectTrigger className="w-[120px]">
+                          <SelectValue placeholder="Select month" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="1">January</SelectItem>
+                          <SelectItem value="2">February</SelectItem>
+                          <SelectItem value="3">March</SelectItem>
+                          <SelectItem value="4">April</SelectItem>
+                          <SelectItem value="5">May</SelectItem>
+                          <SelectItem value="6">June</SelectItem>
+                          <SelectItem value="7">July</SelectItem>
+                          <SelectItem value="8">August</SelectItem>
+                          <SelectItem value="9">September</SelectItem>
+                          <SelectItem value="10">October</SelectItem>
+                          <SelectItem value="11">November</SelectItem>
+                          <SelectItem value="12">December</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Year</label>
+                      <Select 
+                        value={exportYear} 
+                        onValueChange={setExportYear}
+                      >
+                        <SelectTrigger className="w-[120px]">
+                          <SelectValue placeholder="Select year" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="2023">2023</SelectItem>
+                          <SelectItem value="2024">2024</SelectItem>
+                          <SelectItem value="2025">2025</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <Button 
+                      onClick={() => exportAttendance(selectedUser!)}
+                      className="bg-green-600 hover:bg-green-700 text-white"
+                    >
+                      <FileDown className="h-4 w-4 mr-2" />
+                      Download CSV
+                    </Button>
+                  </div>
+                </div>
+                
                 {loading.attendance ? (
                   <div className="text-center py-4">Loading attendance records...</div>
                 ) : (

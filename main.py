@@ -1,8 +1,11 @@
 import os
-from flask import Flask, send_from_directory, jsonify, request, session
+from flask import Flask, send_from_directory, jsonify, request, session, Response
 from flask_cors import CORS
 from datetime import datetime, date
 import logging
+import csv
+import io
+from calendar import monthrange
 from werkzeug.security import generate_password_hash, check_password_hash
 from functools import wraps
 import json
@@ -375,6 +378,71 @@ def get_user_attendance(user_id):
     ).all()
     
     return jsonify([record.to_dict() for record in records])
+
+@app.route('/api/admin/attendance/export/<int:user_id>')
+@admin_required
+def export_user_attendance(user_id):
+    """Export attendance records for a specific user as CSV (admin only)"""
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+    
+    # Get month and year from query parameters, defaults to current month
+    year = int(request.args.get('year', datetime.now().year))
+    month = int(request.args.get('month', datetime.now().month))
+    
+    # Set date range for the month
+    _, last_day = monthrange(year, month)
+    start_date = date(year, month, 1)
+    end_date = date(year, month, last_day)
+    
+    # Get records for the specified month
+    records = CheckinCheckout.query.filter(
+        CheckinCheckout.user_id == user_id,
+        CheckinCheckout.day >= start_date,
+        CheckinCheckout.day <= end_date
+    ).order_by(
+        CheckinCheckout.day.asc(),
+        CheckinCheckout.checkin_time_stamp.asc()
+    ).all()
+    
+    # Create CSV in memory
+    output = io.StringIO()
+    writer = csv.writer(output)
+    
+    # Write header
+    writer.writerow(['Date', 'Check-in Time', 'Check-out Time', 'Location', 
+                    'Task', 'Task Status', 'Project Name', 'Hours Worked'])
+    
+    # Write data rows
+    for record in records:
+        # Calculate hours worked if both check-in and check-out exist
+        hours_worked = ""
+        if record.checkin_time_stamp and record.checkout_time_stamp:
+            duration = record.checkout_time_stamp - record.checkin_time_stamp
+            hours_worked = f"{duration.total_seconds() / 3600:.2f}"
+        
+        writer.writerow([
+            record.day.strftime('%Y-%m-%d') if record.day else "",
+            record.checkin_time_stamp.strftime('%H:%M:%S') if record.checkin_time_stamp else "",
+            record.checkout_time_stamp.strftime('%H:%M:%S') if record.checkout_time_stamp else "",
+            record.location.name if record.location else "",
+            record.task or "",
+            record.task_status or "",
+            record.project_name or "",
+            hours_worked
+        ])
+    
+    # Create response with CSV
+    output.seek(0)
+    month_name = datetime.strptime(str(month), "%m").strftime("%B")
+    filename = f"{user.name.replace(' ', '_')}_attendance_{month_name}_{year}.csv"
+    
+    return Response(
+        output.getvalue(),
+        mimetype="text/csv",
+        headers={"Content-disposition": f"attachment; filename={filename}"}
+    )
 
 # Serve frontend static files - but make sure this is AFTER all API routes
 @app.route('/', defaults={'path': ''})
