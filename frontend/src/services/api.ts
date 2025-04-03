@@ -35,8 +35,8 @@ export const getCheckInStatus = async () => {
   return response.data
 }
 
-export const checkIn = async () => {
-  const response = await api.post('/attendance/checkin')
+export const checkIn = async (locationId: number) => {
+  const response = await api.post('/attendance/checkin', { locationId })
   return response.data
 }
 
@@ -50,6 +50,11 @@ export const checkOut = async (task: string, status: string, projectName: string
 
 export const getAttendanceHistory = async () => {
   const response = await api.get('/attendance/history')
+  return response.data
+}
+
+export const getLocations = async () => {
+  const response = await api.get('/locations')
   return response.data
 }
 

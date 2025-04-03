@@ -127,11 +127,17 @@ def check_in():
     if not user_id:
         return jsonify({"error": "Not authenticated"}), 401
     
-    # Get the first available location (for simplicity)
-    # In a real-world scenario, we would use geolocation to determine the nearest office
-    location = Location.query.first()
+    data = request.get_json()
+    location_id = data.get('locationId')
+    
+    # Log received data for debugging
+    app.logger.debug(f"Check-in request with location ID: {location_id}")
+    
+    # Get the selected location
+    location = Location.query.get(location_id) if location_id else Location.query.first()
+    
     if not location:
-        return jsonify({"error": "No locations available"}), 400
+        return jsonify({"error": "No valid location found"}), 400
     
     today = date.today()
     existing_record = CheckinCheckout.query.filter_by(

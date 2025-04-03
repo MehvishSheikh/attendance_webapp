@@ -2,10 +2,30 @@ import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { useToast } from '@/components/ui/use-toast'
-import { getCheckInStatus, checkIn, checkOut } from '@/services/api'
+import { getCheckInStatus, checkIn, checkOut, getLocations } from '@/services/api'
 import { Clock, MapPin } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
 import TaskForm from './TaskForm'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { useForm } from 'react-hook-form'
+import * as z from 'zod'
+
+// Define schemas
+const checkInSchema = z.object({
+  locationId: z.string({
+    required_error: "Please select a location",
+  }),
+})
+
+type CheckInFormValues = z.infer<typeof checkInSchema>
+
+interface Location {
+  id: number
+  name: string
+  pincode: string
+}
 
 const CheckInOut = () => {
   const { user } = useAuth()
@@ -14,6 +34,8 @@ const CheckInOut = () => {
   const [checkInTime, setCheckInTime] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [showTaskForm, setShowTaskForm] = useState(false)
+  const [locations, setLocations] = useState<Location[]>([])
+  const [showLocationForm, setShowLocationForm] = useState(false)
   
   // Get current date
   const currentDate = new Date().toLocaleDateString('en-US', {
@@ -29,30 +51,55 @@ const CheckInOut = () => {
     minute: '2-digit',
   })
   
+  // Initialize the check-in form
+  const checkInForm = useForm<CheckInFormValues>({
+    resolver: zodResolver(checkInSchema),
+    defaultValues: {
+      locationId: '',
+    },
+  })
+
   useEffect(() => {
-    const fetchCheckInStatus = async () => {
+    const fetchInitialData = async () => {
       if (!user) return
       
       try {
-        const response = await getCheckInStatus()
-        if (response.isCheckedIn) {
+        // Fetch check-in status
+        const statusResponse = await getCheckInStatus()
+        if (statusResponse.isCheckedIn) {
           setIsCheckedIn(true)
-          setCheckInTime(response.checkInTime)
+          setCheckInTime(statusResponse.checkInTime)
         }
+        
+        // Fetch locations
+        const locationsResponse = await getLocations()
+        setLocations(locationsResponse)
       } catch (error) {
-        console.error('Error fetching check-in status:', error)
+        console.error('Error fetching initial data:', error)
       }
     }
     
-    fetchCheckInStatus()
+    fetchInitialData()
   }, [user])
   
-  const handleCheckIn = async () => {
+  const handleShowLocationForm = () => {
+    setShowLocationForm(true)
+  }
+  
+  const handleLocationCancel = () => {
+    setShowLocationForm(false)
+  }
+  
+  const onLocationSubmit = async (values: CheckInFormValues) => {
     setIsLoading(true)
     try {
-      const response = await checkIn()
+      console.log('Checking in with location ID:', values.locationId)
+      // Convert string to number for API call
+      const locationId = parseInt(values.locationId, 10)
+      const response = await checkIn(locationId)
       setIsCheckedIn(true)
       setCheckInTime(response.checkInTime)
+      setShowLocationForm(false)
       toast({
         title: 'Check-in successful',
         description: `You've checked in at ${response.checkInTime}`,
@@ -165,13 +212,54 @@ const CheckInOut = () => {
               </div>
             </div>
             
-            <Button
-              onClick={handleCheckIn}
-              className="w-full"
-              disabled={isLoading}
-            >
-              {isLoading ? 'Processing...' : 'Check In Now'}
-            </Button>
+            {showLocationForm ? (
+              <form onSubmit={checkInForm.handleSubmit(onLocationSubmit)} className="space-y-4">
+                <div className="space-y-2">
+                  <label htmlFor="locationId" className="block text-sm font-medium">
+                    Select Location
+                  </label>
+                  <select
+                    id="locationId"
+                    {...checkInForm.register('locationId')}
+                    className="w-full px-3 py-2 border border-gray-700 rounded-md bg-gray-800 text-white"
+                  >
+                    <option value="">-- Select a location --</option>
+                    {locations.map((location) => (
+                      <option key={location.id} value={location.id}>
+                        {location.name} ({location.pincode})
+                      </option>
+                    ))}
+                  </select>
+                  {checkInForm.formState.errors.locationId && (
+                    <p className="text-red-500 text-xs mt-1">
+                      {checkInForm.formState.errors.locationId.message}
+                    </p>
+                  )}
+                </div>
+                
+                <div className="flex space-x-2">
+                  <Button type="submit" className="flex-1" disabled={isLoading}>
+                    {isLoading ? 'Processing...' : 'Check In'}
+                  </Button>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={handleLocationCancel}
+                    disabled={isLoading}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </form>
+            ) : (
+              <Button
+                onClick={handleShowLocationForm}
+                className="w-full"
+                disabled={isLoading}
+              >
+                {isLoading ? 'Processing...' : 'Check In Now'}
+              </Button>
+            )}
           </div>
         )}
       </CardContent>
