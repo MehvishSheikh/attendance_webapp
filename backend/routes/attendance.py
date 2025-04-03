@@ -93,19 +93,19 @@ def check_in():
 def check_out():
     user_id = get_jwt_identity()
     today = datetime.now().date()
-    now = datetime.now()
     data = request.get_json()
 
-    # Check if user has already checked out today
-    existing_record = CheckinCheckout.query.filter_by(
+    # Get today's record
+    record = CheckinCheckout.query.filter_by(
         user_id=user_id,
         day=today
     ).first()
 
-    if existing_record and existing_record.checkout_time_stamp:
-        return jsonify({'error': 'You have already checked out for today'}), 400
-    elif not existing_record:
+    if not record:
         return jsonify({'error': 'No check-in found for today. Please check in first'}), 400
+
+    if record.checkout_time_stamp:
+        return jsonify({'error': 'You have already checked out today. Only one check-out per day is allowed.'}), 400
 
     # Validate task data
     if not data.get('task'):
@@ -116,10 +116,11 @@ def check_out():
         return jsonify({'error': 'Project name is required'}), 400
 
     # Update the record with check-out details
-    existing_record.checkout_time_stamp = now
-    existing_record.task = data.get('task')
-    existing_record.task_status = data.get('taskStatus')
-    existing_record.project_name = data.get('projectName')
+    now = datetime.now()
+    record.checkout_time_stamp = now
+    record.task = data.get('task')
+    record.task_status = data.get('taskStatus')
+    record.project_name = data.get('projectName')
 
     try:
         db.session.commit()
@@ -127,7 +128,7 @@ def check_out():
         return jsonify({
             'message': 'Check-out successful',
             'checkOutTime': now.isoformat(),
-            'taskStatus': existing_record.task_status
+            'taskStatus': record.task_status
         })
     except Exception as e:
         db.session.rollback()
