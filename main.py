@@ -9,7 +9,8 @@ from calendar import monthrange
 from werkzeug.security import generate_password_hash, check_password_hash
 from functools import wraps
 import json
-
+from dotenv import load_dotenv
+load_dotenv()
 # Import database models
 from models import db, User, Location, CheckinCheckout, GeoLocation
 
@@ -19,8 +20,9 @@ logging.basicConfig(level=logging.DEBUG)
 app = Flask(__name__)
 
 # App configuration 
-app.secret_key = os.environ.get("SESSION_SECRET", "senslyze_secret_key")
-app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL")
+app.secret_key = os.getenv("SESSION_SECRET", "senslyze_secret_key")
+app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URL")
+# app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL")
 app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
     "pool_recycle": 300,
     "pool_pre_ping": True,
@@ -470,4 +472,4 @@ def serve(path):
         return send_from_directory('frontend/dist', 'index.html')
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    app.run(host="0.0.0.0", port=5002, debug=True)

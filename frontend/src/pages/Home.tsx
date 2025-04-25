@@ -48,9 +48,9 @@ export default function Home() {
             </TabsList>
             
             <TabsContent value="attendance" className="animate-in fade-in-50 duration-500">
-              <div className="max-w-md mx-auto">
+              
                 <CheckInOut />
-              </div>
+            
             </TabsContent>
             
             <TabsContent value="dashboard" className="animate-in fade-in-50 duration-500">

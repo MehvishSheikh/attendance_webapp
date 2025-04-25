@@ -7,7 +7,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_jwt_extended import JWTManager
 from flask_cors import CORS
 from sqlalchemy.orm import DeclarativeBase
-
+from backend.extensions import db
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
 
@@ -16,7 +16,7 @@ class Base(DeclarativeBase):
     pass
 
 # Initialize extensions
-db = SQLAlchemy(model_class=Base)
+
 jwt = JWTManager()
 
 # Create the Flask app

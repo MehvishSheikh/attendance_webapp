@@ -221,7 +221,8 @@ const CheckInOut = () => {
   const isDark = theme === 'dark'
   
   return (
-    <Card className="w-full shadow-md border border-border overflow-hidden">
+    
+    <Card className="shadow-md border border-border overflow-hidden" style={{ width: "95%" }}>
       <CardHeader className="bg-primary/5 pb-4 border-b border-border">
         <div className="flex items-center justify-between">
           <div>
